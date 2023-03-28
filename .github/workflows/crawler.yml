@@ -28,6 +28,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        cd crawler_usa_schedle
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Run Python Crawler
       run: python crawler_usa_schedle/run.py
