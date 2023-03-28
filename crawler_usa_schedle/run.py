@@ -2,8 +2,8 @@ import requests
 import json
 import os
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
-load_dotenv()
+# from dotenv import load_dotenv
+# load_dotenv()
 # from linebot.models import TextSendMessage
 # from linebot import (
 #     LineBotApi, WebhookHandler
