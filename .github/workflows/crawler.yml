@@ -30,7 +30,7 @@ jobs:
       run: |
         cd crawler_usa_schedle
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Run Python Crawler
+    - name: Run Python Crawler, Notify Slack & Line
       run: python crawler_usa_schedle/run.py
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

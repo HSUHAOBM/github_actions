@@ -94,8 +94,8 @@ class WebCrawlerUSA:
     def push(self, slack_webhook=None, line_token=None):
         result = '\n'+'\n\n'.join(self.result)
         try:
-            # msg = LineNotification(result)
-            # msg.push_line_notify()
+            msg = LineNotification(result)
+            msg.push_line_notify()
 
             slack = SlackNotification(result)
             slack.push()
