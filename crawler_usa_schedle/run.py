@@ -2,18 +2,42 @@ import requests
 import json
 import os
 from bs4 import BeautifulSoup
-# from dotenv import load_dotenv
-# load_dotenv()
-# from linebot.models import TextSendMessage
-# from linebot import (
-#     LineBotApi, WebhookHandler
-# )
+from linebot import LineBotApi
+from linebot.models import TextSendMessage
 
+# LineNotify
 line_notify_url = "https://notify-api.line.me/api/notify"
 line_notify_token = os.getenv('LINE_NOTIFY_TOKEN')
+
+# Slack
 slack_webhook = os.getenv('SLACK_WEBHOOK')
 
+# LineBot
+line_bot_token = os.getenv('LINE_BOT_TOKEN')
+line_user_id = os.getenv('LINE_USER_ID')
 
+
+# LineBot
+class LineBot:
+    def __init__(self, context):
+        self.context = context
+        self.line_bot_api = LineBotApi(line_bot_token)
+        self.user_id = line_user_id
+
+    def push_message(self):
+        if not self.user_id or not self.line_bot_api:
+            raise Exception("LINE Bot token or user ID is missing.")
+        try:
+            self.line_bot_api.push_message(
+                self.user_id,
+                TextSendMessage(text=self.context)
+            )
+            print("Message sent successfully via LINE Bot.")
+        except Exception as e:
+            print(f"Failed to send message via LINE Bot: {e}")
+
+
+# Slack
 class SlackNotification:
     def __init__(self, context):
         self.context = context
@@ -44,6 +68,7 @@ class SlackNotification:
             raise Exception(response.status_code, response.text)
 
 
+# LinetNotify
 class LineNotification:
     def __init__(self, context):
         self.context = context
@@ -61,6 +86,7 @@ class LineNotification:
         print(response)
 
 
+# 爬蟲
 class WebCrawlerUSA:
     def __init__(self):
         self.rs = requests.session()
@@ -91,11 +117,14 @@ class WebCrawlerUSA:
             self.result.append(
                 '{}\n{}\n{}\n{}'.format(info_date, url[0], info_price, info))
 
-    def push(self, slack_webhook=None, line_token=None):
+    def push(self):
         result = '\n'+'\n\n'.join(self.result)
         try:
-            msg = LineNotification(result)
-            msg.push_line_notify()
+            line_notify = LineNotification(result)
+            line_notify.push_line_notify()
+
+            line_bot = LineBot(result)
+            line_bot.push_message()
 
             slack = SlackNotification(result)
             slack.push()
