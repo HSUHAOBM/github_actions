@@ -5,13 +5,9 @@ from bs4 import BeautifulSoup
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 
-# LineNotify
-line_notify_url = "https://notify-api.line.me/api/notify"
-line_notify_token = os.getenv('LINE_NOTIFY_TOKEN')
 
 # Slack
 slack_webhook = os.getenv('SLACK_WEBHOOK')
-
 # LineBot
 line_bot_token = os.getenv('LINE_BOT_TOKEN')
 line_user_id = os.getenv('LINE_USER_ID')
@@ -68,24 +64,6 @@ class SlackNotification:
             raise Exception(response.status_code, response.text)
 
 
-# LinetNotify
-class LineNotification:
-    def __init__(self, context):
-        self.context = context
-
-    def push_line_notify(self):
-        headers = {
-            "Authorization": f"Bearer {line_notify_token}",
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
-        payload = {"message": self.context}
-        response = requests.post(
-            line_notify_url, headers=headers, data=payload)
-
-        # response = requests.post(line_notify_url, headers=headers, data=payload)
-        print(response)
-
-
 # 爬蟲
 class WebCrawlerUSA:
     def __init__(self):
@@ -120,12 +98,10 @@ class WebCrawlerUSA:
     def push(self):
         result = '\n'+'\n\n'.join(self.result)
         try:
-            line_notify = LineNotification(result)
-            line_notify.push_line_notify()
-
+            # LineOA
             line_bot = LineBot(result)
             line_bot.push_message()
-
+            # Slack
             slack = SlackNotification(result)
             slack.push()
         except Exception as e:
