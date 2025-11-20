@@ -5,7 +5,10 @@ from bs4 import BeautifulSoup
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 from datetime import datetime
+import urllib3
 
+# 禁用 SSL 警告
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Slack
 slack_webhook = os.getenv('SLACK_WEBHOOK')
@@ -98,7 +101,8 @@ class WeatherForecast:
             'locationName': self.location
         }
         try:
-            response = requests.get(self.api_url, params=params)
+            # 禁用 SSL 驗證以避免 GitHub Actions 環境的憑證問題
+            response = requests.get(self.api_url, params=params, verify=False)
             response.raise_for_status()
             data = response.json()
 
