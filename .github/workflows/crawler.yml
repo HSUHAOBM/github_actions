@@ -30,10 +30,10 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd crawler_usa_schedle
+        cd daily_notify
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Run Python Crawler Slack & Line
-      run: python crawler_usa_schedle/run.py
+      run: python daily_notify/run.py
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         CHANNEL_ACCESS_TOKEN: ${{ secrets.CHANNEL_ACCESS_TOKEN }}
@@ -41,3 +41,4 @@ jobs:
         LINE_NOTIFY_TOKEN: ${{ secrets.LINE_NOTIFY_TOKEN }}
         LINE_BOT_TOKEN: ${{ secrets.LINE_BOT_TOKEN  }}
         LINE_USER_ID: ${{ secrets.LINE_USER_ID  }}
+        CWA_API_KEY: ${{ secrets.CWA_API_KEY  }}
