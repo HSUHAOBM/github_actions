@@ -88,6 +88,11 @@ class WeatherForecast:
 
     def fetch(self):
         """取得天氣預報資料"""
+        if not cwa_api_key:
+            print("Warning: CWA_API_KEY not set")
+            self.result = "無法取得天氣資料：API Key 未設定"
+            return self.result
+
         params = {
             'Authorization': cwa_api_key,
             'locationName': self.location
@@ -134,9 +139,13 @@ class WeatherForecast:
 
     def push(self):
         """推送天氣訊息到 LINE"""
+        if not self.result or "無法取得" in self.result or "未設定" in self.result:
+            print(f"Skipping weather notification: {self.result}")
+            return
         try:
             weather_line_bot = LineBot(self.result)
             weather_line_bot.push_message()
+            print("Weather message sent successfully")
         except Exception as e:
             print(f"Failed to send weather info: {e}")
 
@@ -187,11 +196,25 @@ class WebCrawlerUSA:
 
 if __name__ == '__main__':
     # 美股資訊
-    crawler = WebCrawlerUSA()
-    crawler.fetch()
-    crawler.push()
+    try:
+        print("=" * 50)
+        print("開始執行美股資訊爬蟲...")
+        print("=" * 50)
+        crawler = WebCrawlerUSA()
+        crawler.fetch()
+        crawler.push()
+        print("美股資訊推送完成")
+    except Exception as e:
+        print(f"美股資訊執行失敗: {e}")
 
     # 氣象資訊
-    weather = WeatherForecast(location='高雄市')
-    weather.fetch()
-    weather.push()
+    try:
+        print("\n" + "=" * 50)
+        print("開始執行氣象資訊...")
+        print("=" * 50)
+        weather = WeatherForecast(location='高雄市')
+        weather.fetch()
+        weather.push()
+        print("氣象資訊推送完成")
+    except Exception as e:
+        print(f"氣象資訊執行失敗: {e}")
