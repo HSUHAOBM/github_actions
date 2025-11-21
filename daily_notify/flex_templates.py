@@ -238,7 +238,7 @@ def create_weather_flex_message(location_name, weather_data):
                         {
                             "type": "text",
                             "text": weather["weather"],
-                            "size": "sm",
+                            "size": "md",
                             "color": "#34495E",
                             "weight": "bold",
                             "wrap": True
@@ -246,7 +246,7 @@ def create_weather_flex_message(location_name, weather_data):
                         {
                             "type": "text",
                             "text": weather["comfort"],
-                            "size": "xs",
+                            "size": "sm",
                             "color": "#7F8C8D",
                             "margin": "xs",
                             "wrap": True
@@ -266,13 +266,13 @@ def create_weather_flex_message(location_name, weather_data):
                                 {
                                     "type": "text",
                                     "text": "🌡️",
-                                    "size": "sm",
+                                    "size": "md",
                                     "flex": 0
                                 },
                                 {
                                     "type": "text",
                                     "text": f"{weather['minTemp']}° - {weather['maxTemp']}°",
-                                    "size": "sm",
+                                    "size": "md",
                                     "weight": "bold",
                                     "color": "#FF6B35",
                                     "margin": "sm",
@@ -288,13 +288,13 @@ def create_weather_flex_message(location_name, weather_data):
                                 {
                                     "type": "text",
                                     "text": "💧",
-                                    "size": "sm",
+                                    "size": "md",
                                     "flex": 0
                                 },
                                 {
                                     "type": "text",
                                     "text": f"{weather['rain']}%",
-                                    "size": "sm",
+                                    "size": "md",
                                     "weight": "bold",
                                     "color": rain_color,
                                     "margin": "sm",
