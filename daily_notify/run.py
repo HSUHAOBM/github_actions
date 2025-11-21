@@ -3,9 +3,10 @@ import json
 import os
 from bs4 import BeautifulSoup
 from linebot import LineBotApi
-from linebot.models import TextSendMessage
+from linebot.models import TextSendMessage, FlexSendMessage
 from datetime import datetime
 import urllib3
+from flex_templates import create_stock_flex_message, create_weather_flex_message
 
 # 禁用 SSL 警告
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -21,8 +22,9 @@ cwa_api_key = os.getenv('CWA_API_KEY')
 
 # LineBot
 class LineBot:
-    def __init__(self, context):
+    def __init__(self, context=None, flex_message=None):
         self.context = context
+        self.flex_message = flex_message
         self.line_bot_api = LineBotApi(line_bot_token)
         self.user_id = line_user_id
 
@@ -30,10 +32,14 @@ class LineBot:
         if not self.user_id or not self.line_bot_api:
             raise Exception("LINE Bot token or user ID is missing.")
         try:
-            self.line_bot_api.push_message(
-                self.user_id,
-                TextSendMessage(text=self.context)
-            )
+            # 如果有 Flex Message 就用 Flex,否則用純文字
+            if self.flex_message:
+                self.line_bot_api.push_message(self.user_id, self.flex_message)
+            else:
+                self.line_bot_api.push_message(
+                    self.user_id,
+                    TextSendMessage(text=self.context)
+                )
             print("Message sent successfully via LINE Bot.")
         except Exception as e:
             print(f"Failed to send message via LINE Bot: {e}")
@@ -76,6 +82,7 @@ class WeatherForecast:
         self.location = location
         self.api_url = 'https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001'
         self.result = ''
+        self.weather_data = []  # 儲存結構化資料用於 Flex Message
 
     def get_period_name(self, start_time):
         """根據時間判斷時段並加上 emoji"""
@@ -115,6 +122,11 @@ class WeatherForecast:
 
             # 格式化訊息
             lines = [f"*{location_name} 36 小時天氣預報*"]
+            self.weather_data = []  # 清空並重新填充
+
+            # 取得今天的日期用於比對
+            from datetime import datetime as dt
+            today = dt.now().date()
 
             for i in range(3):
                 start = element_map['Wx'][i]['startTime']
@@ -133,6 +145,28 @@ class WeatherForecast:
                 lines.append(f"溫度:{minT}°C ~ {maxT}°C")
                 lines.append(f"降雨:{pop}%")
 
+                # 儲存結構化資料用於 Flex Message
+                emoji_map = {"🌅 早上": "🌅", "☀️ 白天": "☀️",
+                             "🌃 晚上": "🌃", "🌙 凌晨": "🌙"}
+                period_text = period.replace(
+                    emoji_map.get(period, ""), "").strip()
+
+                # 判斷是否為明天
+                start_date = dt.strptime(start, "%Y-%m-%d %H:%M:%S").date()
+                if start_date > today:
+                    period_text = "明天" + period_text
+
+                self.weather_data.append({
+                    "period": period_text,
+                    "emoji": emoji_map.get(period, "🌤️"),
+                    "time": f"{start[5:16]} - {end[5:16]}",
+                    "weather": wx,
+                    "comfort": ci,
+                    "minTemp": minT,
+                    "maxTemp": maxT,
+                    "rain": pop
+                })
+
             self.result = "\n".join(lines)
             return self.result
 
@@ -147,7 +181,10 @@ class WeatherForecast:
             print(f"Skipping weather notification: {self.result}")
             return
         try:
-            weather_line_bot = LineBot(self.result)
+            # 使用 Flex Message
+            flex_msg = create_weather_flex_message(
+                self.location, self.weather_data)
+            weather_line_bot = LineBot(flex_message=flex_msg)
             weather_line_bot.push_message()
             print("Weather message sent successfully")
         except Exception as e:
@@ -165,6 +202,7 @@ class WebCrawlerUSA:
             ('那斯達克綜合指數', 'https://invest.cnyes.com/index/GI/IXIC'),  # NASDAQ
         ]
         self.result = []
+        self.stocks_data = []  # 儲存結構化資料用於 Flex Message
 
     def fetch(self):
         for url in self.urls:
@@ -176,22 +214,44 @@ class WebCrawlerUSA:
             info_net = soup.select('.jsx-2214436525.change-net')[0].text
             info_percent = soup.select(
                 '.jsx-2214436525.change-percent')[0].text
+
+            # 判斷漲跌
             if '+' in info_net:
                 info = '{}▲  {}▲'.format(info_net, info_percent)
                 info = info.replace('+', '')
+                trend = 'up'
+                change = info_net.replace('+', '')
+                percent = info_percent.replace('+', '')
             else:
                 info = '{}▼  {}▼'.format(info_net, info_percent)
                 info = info.replace('-', '')
+                trend = 'down'
+                change = info_net.replace('-', '')
+                percent = info_percent.replace('-', '')
+
+            # 儲存文字格式
             self.result.append(
                 '{}\n{}\n{}\n{}'.format(info_date, url[0], info_price, info))
 
+            # 儲存結構化資料用於 Flex Message
+            self.stocks_data.append({
+                "name": url[0],
+                "date": info_date,
+                "price": info_price,
+                "change": change,
+                "percent": percent,
+                "trend": trend
+            })
+
     def push(self):
-        result = '\n'+'\n\n'.join(self.result)
         try:
-            # LineOA - 美股資訊
-            usa_stock_line_bot = LineBot(result)
+            # LineOA - 美股資訊 (使用 Flex Message)
+            flex_msg = create_stock_flex_message(self.stocks_data)
+            usa_stock_line_bot = LineBot(flex_message=flex_msg)
             usa_stock_line_bot.push_message()
-            # Slack
+
+            # Slack (使用文字格式)
+            result = '\n'+'\n\n'.join(self.result)
             slack = SlackNotification(result)
             slack.push()
         except Exception as e:
