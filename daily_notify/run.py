@@ -4,7 +4,7 @@ import os
 from bs4 import BeautifulSoup
 from linebot import LineBotApi
 from linebot.models import TextSendMessage, FlexSendMessage
-from datetime import datetime
+from datetime import datetime, timedelta
 import urllib3
 from flex_templates import create_stock_flex_message, create_weather_flex_message
 
@@ -151,9 +151,10 @@ class WeatherForecast:
                 period_text = period.replace(
                     emoji_map.get(period, ""), "").strip()
 
-                # 判斷是否為明天
+                # 判斷是否為明天(只有當開始日期比今天大於1天時才是明天)
                 start_date = dt.strptime(start, "%Y-%m-%d %H:%M:%S").date()
-                if start_date > today:
+                tomorrow = today + timedelta(days=1)
+                if start_date >= tomorrow:
                     period_text = "明天" + period_text
 
                 self.weather_data.append({
