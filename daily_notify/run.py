@@ -126,7 +126,6 @@ class WeatherForecast:
 
             # 取得今天的日期用於比對
             from datetime import datetime as dt
-            today = dt.now().date()
 
             for i in range(3):
                 start = element_map['Wx'][i]['startTime']
@@ -151,10 +150,8 @@ class WeatherForecast:
                 period_text = period.replace(
                     emoji_map.get(period, ""), "").strip()
 
-                # 判斷是否為明天(只有當開始日期比今天大於1天時才是明天)
-                start_date = dt.strptime(start, "%Y-%m-%d %H:%M:%S").date()
-                tomorrow = today + timedelta(days=1)
-                if start_date >= tomorrow:
+                # 第 3 個時段(索引 2)如果是"早上",加上"明天"前綴
+                if i == 2 and "早上" in period_text:
                     period_text = "明天" + period_text
 
                 self.weather_data.append({
