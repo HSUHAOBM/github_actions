@@ -9,8 +9,7 @@ on:
     branches: [ main ]
   schedule:
     # UTC 00:00
-    - cron: '0 22 * * *' # 每天 UTC 22:00 → 台灣時間 06:00
-
+    - cron: '30 21 * * *'  # UTC 21:30 → 台灣 05:30
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
